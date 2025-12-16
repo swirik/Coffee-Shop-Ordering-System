@@ -7,7 +7,8 @@ import java.util.*;
 import java.util.List;
 
 public class GraphicalUnitInterface extends JPanel {
-    private final Stack<OrderItem> cartStack = new Stack<>();
+
+    private final Stack<OrderItem> cart = new Stack<>();
     private final PriorityQueue<Order> orderQueue = new PriorityQueue<>();
 
     private final JPanel menuGrid;
@@ -34,7 +35,7 @@ public class GraphicalUnitInterface extends JPanel {
 
         menuGrid = new JPanel(new GridLayout(0, 3, 20, 20));
         menuGrid.setBackground(UIComponents.BG_COLOR);
-        populateMenu();
+        MenuItems();
 
         JScrollPane scroll = new JScrollPane(menuGrid);
         scroll.setBorder(null);
@@ -61,7 +62,8 @@ public class GraphicalUnitInterface extends JPanel {
         add(rightPanel, BorderLayout.EAST);
     }
 
-    private void populateMenu() {
+    private void MenuItems() {
+
         MenuItem[] items = {
                 new MenuItem("Espresso", 79, "Coffee"),
                 new MenuItem("Cafe Latte", 120, "Coffee"),
@@ -74,9 +76,11 @@ public class GraphicalUnitInterface extends JPanel {
         for (MenuItem m : items) {
             menuGrid.add(createItemCard(m));
         }
+
     }
 
     private JPanel createItemCard(MenuItem item) {
+
         UIComponents.CardPanel card = new UIComponents.CardPanel();
         card.setLayout(new BorderLayout(0, 10));
 
@@ -108,9 +112,11 @@ public class GraphicalUnitInterface extends JPanel {
 
         card.add(info, BorderLayout.SOUTH);
         return card;
+
     }
 
     private JPanel createCartPanel() {
+
         UIComponents.CardPanel panel = new UIComponents.CardPanel();
         panel.setLayout(new BorderLayout(10, 10));
 
@@ -143,10 +149,13 @@ public class GraphicalUnitInterface extends JPanel {
 
         panel.add(bottom, BorderLayout.SOUTH);
         return panel;
+
     }
 
     private JPanel createQueuePanel() {
+
         UIComponents.CardPanel panel = new UIComponents.CardPanel();
+
         panel.setLayout(new BorderLayout(10, 10));
 
         JLabel title = new JLabel("Queue (Staff Side - Optional)");
@@ -164,39 +173,49 @@ public class GraphicalUnitInterface extends JPanel {
         return panel;
     }
 
-    private void addItem(MenuItem m) {
-        String[] sizes = {"Standard", "Medium", "Large"};
-        int s = JOptionPane.showOptionDialog(this, "Size?", "Select", 0, 3, null, sizes, sizes[0]);
-        if (s == -1) return;
+    private void addItem(MenuItem item) {
 
-        cartStack.push(new OrderItem(m, sizes[s]));
+        String size = "Standard";
+
+        if (item.getCategory().equals("Coffee")) {
+            String[] sizes = {"Standard", "Medium", "Large"};
+            int choice = JOptionPane.showOptionDialog(
+                    this,
+                    "Size?",
+                    "Select",
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    sizes,
+                    sizes[0]
+            );
+
+            if (choice == -1) return;
+            size = sizes[choice];
+        }
+
+        cart.push(new OrderItem(item, size));
         refreshCart();
     }
 
+
     private void undo() {
-        if (!cartStack.isEmpty()) {
-            cartStack.pop();
+        if (!cart.isEmpty()) {
+            cart.pop();
             refreshCart();
         }
     }
 
-    private void refreshCart() {
-        cartModel.clear();
-        double t = 0;
-        for (OrderItem i : cartStack) {
-            cartModel.addElement(i.toString());
-            t += i.getPrice();
-        }
-        totalLabel.setText(String.format("Total: ₱%.2f", t));
-    }
 
     private void checkout() {
-        if (cartStack.isEmpty()) return;
 
-        List<OrderItem> items = new ArrayList<>(cartStack);
+        if (cart.isEmpty()) {
+            return;
+        }
+
+        List<OrderItem> items = new ArrayList<>(cart);
         boolean isRush = rushCheckBox.isSelected();
         Order order = new Order("Guest", items, isRush);
-
         orderQueue.add(order);
 
         JOptionPane.showMessageDialog(this,
@@ -204,14 +223,18 @@ public class GraphicalUnitInterface extends JPanel {
                 "Order Confirmed",
                 JOptionPane.INFORMATION_MESSAGE);
 
-        cartStack.clear();
+        cart.clear();
         rushCheckBox.setSelected(false);
         refreshCart();
         refreshQueue();
     }
 
     private void completeOrder() {
-        if (orderQueue.isEmpty()) return;
+
+        if (orderQueue.isEmpty()) {
+            return;
+        }
+
         Order completed = orderQueue.poll();
         completed.setStatus("COMPLETED");
         refreshQueue();
@@ -253,5 +276,15 @@ public class GraphicalUnitInterface extends JPanel {
             String prefix = o.isRush() ? "[RUSH] " : "";
             queueModel.addElement(prefix + "Order #" + o.getId() + " - " + o.getStatus());
         }
+    }
+
+    private void refreshCart() {
+        cartModel.clear();
+        double t = 0;
+        for (OrderItem i : cart) {
+            cartModel.addElement(i.toString());
+            t += i.getPrice();
+        }
+        totalLabel.setText(String.format("Total: ₱%.2f", t));
     }
 }
