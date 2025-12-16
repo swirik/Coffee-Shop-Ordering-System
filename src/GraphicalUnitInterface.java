@@ -18,6 +18,7 @@ public class GraphicalUnitInterface extends JPanel {
     private final JCheckBox rushCheckBox;
 
     public GraphicalUnitInterface() {
+
         setLayout(new BorderLayout());
         setBackground(UIComponents.BG_COLOR);
 
